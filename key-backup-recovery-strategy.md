@@ -224,7 +224,7 @@ Loss of the recovery phrase combined with loss of all account access results in 
 
 ---
 
-## Appendix: Re-Enrollment After Loss of Recovery Phrase *(requires further design)*
+## Appendix A: Re-Enrollment After Loss of Recovery Phrase *(requires further design)*
 
 > **Note:** This section identifies a necessary feature and its key design challenges. The exact mechanism requires a dedicated design pass and is not yet fully specified.
 
@@ -243,3 +243,25 @@ To coordinate key rotation across devices, the active `recovery-pubkey-id` is em
 5. On each secondary device, the user initiates a "use existing recovery and sync phrase" workflow, entering the new recovery phrase. The device fetches the server-side key identifier, verifies it matches the newly derived `recovery-pubkey`, and resumes normal participation.
 
 Any device that is not explicitly rejoined will detect the key mismatch and suspend backup and sync participation until the user completes the workflow on that device. A device that is permanently forgotten simply ceases to participate.
+
+---
+
+## Appendix B: Multi-Device Secret Sync and Recovery Phrase Exposure *(requires further design)*
+
+> **Note:** This section identifies likely user needs and associated security concerns that will need to be addressed. No design decisions are made here.
+
+### Multi-Device Sync via the Backup Mechanism
+
+The backup architecture described in this document already technically enables multi-device synchronisation of secret keys, without requiring any additional infrastructure. When a user acquires a new secret key on one device, the application could notify the user on their secondary devices that a new key is available in the backup. The user would then initiate a sync by entering their 24-word recovery phrase on the secondary device, which decrypts the latest backup and imports the new key. This is a manual process, but it is a natural consequence of the existing architecture.
+
+### Demand for Easier Sync
+
+Users who are asked to enter 24 words on a secondary device will predictably request a more convenient mechanism, such as QR code scanning. This is a reasonable expectation, but it introduces a significant risk: if the QR code encodes the seed or recovery phrase directly, users may photograph it, and that photograph may be automatically uploaded to cloud storage, exposing the seed to unintended parties and defeating the security model.
+
+For this reason, any future convenience mechanism for cross-device sync should never expose the seed or recovery phrase directly on screen or in a scannable code. Instead, such a mechanism should use a temporary secure channel — the QR code would encode only ephemeral connection parameters for that channel, and the actual secret material would be transferred through it. The detailed design of such a mechanism is left for a future design pass.
+
+### Recovery Phrase Display
+
+A related concern applies to the initial display of the 24-word recovery phrase. If the full phrase is shown on screen at once, users may be tempted to photograph it for convenience. A photograph stored in cloud-synced storage would compromise the security of the entire backup system.
+
+To make this harder, Thunderbird should consider displaying only one word at a time during the phrase recording step. This would make bulk photographic capture significantly more cumbersome, nudging users toward writing the phrase down by hand as intended. The tradeoff in usability should be weighed against the security benefit during implementation.
