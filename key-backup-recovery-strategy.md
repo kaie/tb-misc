@@ -1,8 +1,10 @@
 # Thunderbird Key Backup and Recovery Strategy
 
+*Draft proposal — March 2026*
+
 ## Overview
 
-This document describes the backup and recovery strategy for cryptographic keys managed by Thunderbird. The primary goal is to allow full recovery of all application private keys using only two things: access to the user's email accounts and a handwritten recovery phrase.
+This document proposes a new backup and recovery mechanism for cryptographic keys managed by Thunderbird. It describes a design that does not yet exist in Thunderbird and is intended as a basis for discussion and implementation planning. The primary goal is to allow full recovery of all application private keys using only two things: access to the user's email accounts and a handwritten recovery phrase.
 
 The document additionally proposes Cross-Device Trust Sync as an optional extension that reuses the infrastructure established for backup. This feature has lower priority and would be implemented separately. It is described here because the backup architecture directly enables it, and decisions made during backup design affect how it could be implemented.
 
@@ -265,3 +267,19 @@ For this reason, any future convenience mechanism for cross-device sync should n
 A related concern applies to the initial display of the 24-word recovery phrase. If the full phrase is shown on screen at once, users may be tempted to photograph it for convenience. A photograph stored in cloud-synced storage would compromise the security of the entire backup system.
 
 To make this harder, Thunderbird should consider displaying only one word at a time during the phrase recording step. This would make bulk photographic capture significantly more cumbersome, nudging users toward writing the phrase down by hand as intended. The tradeoff in usability should be weighed against the security benefit during implementation.
+
+---
+
+## Appendix C: Additional Security Considerations
+
+### User Trust and Opt-Out
+
+Some users may feel uncomfortable uploading their secret key material to an IMAP server, even when it is strongly encrypted and the design has been carefully reviewed. They may not trust the encryption model, or they may be concerned about the consequences of an implementation bug. This is a legitimate position and should be respected.
+
+The mechanism proposed in this document should therefore be presented as optional and convenient, not mandatory. Users who prefer not to use it should be able to turn it off entirely and rely on a classic manual backup approach — for example, exporting their secret keys to an encrypted file and storing it themselves.
+
+### Implementation Quality Requirements
+
+The archive creation and encryption pipeline is a security-critical code path. A bug that accidentally produces an unencrypted backup archive, or that transmits key material before encryption is applied, would silently compromise all of the user's secrets. The consequences of such a bug would be severe and potentially undetectable by the user.
+
+This code path must be subject to thorough automated testing, including tests that explicitly verify the output is encrypted and contains no plaintext key material. Any change to the archive creation or encryption logic should be treated with the same scrutiny as a change to a cryptographic primitive.
